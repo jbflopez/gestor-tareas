@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Tareas</title>
+  <style>
+  <style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f8f9fa;
+    padding: 40px;
+    max-width: 600px;
+    margin: auto;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    color: #343a40;
+    text-align: center;
+  }
+
+  ul {
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    background: #ffffff;
+    margin: 8px 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s ease;
+    cursor: pointer;
+  }
+
+  li:hover {
+    background: #f1f3f5;
+  }
+
+  li.completada {
+    text-decoration: line-through;
+    color: #888;
+  }
+
+  button {
+    margin-left: 8px;
+    background: #dee2e6;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #ced4da;
+  }
+
+  form {
+    display: flex;
+    margin-top: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+  button[type="submit"] {
+    margin-left: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 16px;
+    border-radius: 4px;
+  }
+
+  button[type="submit"]:hover {
+    background: #0056b3;
+  }
+</style>
+</head>
+<body>
+  <h1>📋 Mis Tareas</h1>
+
+  <ul id="lista-tareas"></ul>
+
+  <h2>➕ Añadir nueva tarea</h2>
+  <form id="formulario">
+    <input type="text" id="nueva-tarea" placeholder="Descripción de la tarea" required>
+    <button type="submit">Agregar</button>
+  </form>
+
+  <script>
+    const lista = document.getElementById("lista-tareas");
+    const formulario = document.getElementById("formulario");
+    const input = document.getElementById("nueva-tarea");
+
+    // Cargar tareas al abrir la página
+    fetch('http://127.0.0.1:5000/api/tareas')
+      .then(res => res.json())
+      .then(tareas => {
+        tareas.forEach(mostrarTarea);
+      });
+
+     // Botón editar
+const botonEditar = document.createElement("button");
+botonEditar.textContent = "✏️";
+botonEditar.style.marginLeft = "10px";
+botonEditar.addEventListener("click", e => {
+  e.stopPropagation(); // evita marcar como hecha
+  const nuevoTexto = prompt("Editar tarea:", tarea.descripcion);
+  if (nuevoTexto && nuevoTexto.trim() !== "") {
+    fetch(`http://127.0.0.1:5000/api/tareas/${tarea.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descripcion: nuevoTexto })
+    })
+    .then(() => {
+      li.firstChild.textContent = nuevoTexto; // actualiza el texto en pantalla
+    });
+  }
+});
+
+    // Función para mostrar una tarea en pantalla
+   function mostrarTarea(tarea) {
+  const li = document.createElement("li");
+  li.textContent = tarea.descripcion;
+  const fecha = document.createElement("small");
+const fechaFormateada = new Date(tarea.fecha_creacion).toLocaleString();
+fecha.textContent = `📅 ${fechaFormateada}`;
+fecha.style.marginLeft = "15px";
+fecha.style.fontSize = "12px";
+fecha.style.color = "#666";
+li.appendChild(fecha);
+  li.className = tarea.completada ? "completada" : "";
+
+  // Al hacer clic, marcar como completada
+  li.addEventListener("click", () => marcarComoHecha(tarea.id, li));
+
+  // Botón para eliminar
+  const botonEliminar = document.createElement("button");
+  botonEliminar.textContent = "❌";
+  botonEliminar.style.marginLeft = "10px";
+  botonEliminar.addEventListener("click", e => {
+    e.stopPropagation();  // Evita marcar como completada al borrar
+    eliminarTarea(tarea.id, li);
+  });
+
+  li.appendChild(botonEliminar);
+  lista.appendChild(li);
+}
+
+function eliminarTarea(id, li) {
+  fetch(`http://127.0.0.1:5000/api/tareas/${id}`, {
+    method: 'DELETE'
+  })
+  .then(() => {
+    li.remove();
+    li.appendChild(botonEditar);
+    li.appendChild(botonEliminar);
+  });
+}
+
+
+
+    // Marcar tarea como completada
+    function marcarComoHecha(id, li) {
+      fetch(`http://127.0.0.1:5000/api/tareas/${id}`, {
+        method: 'PUT'
+      })
+      .then(res => res.json())
+      .then(() => {
+        li.classList.add("completada");
+      });
+    }
+
+    // Añadir nueva tarea
+    formulario.addEventListener("submit", e => {
+      e.preventDefault();
+      const descripcion = input.value.trim();
+      if (!descripcion) return;
+
+      fetch('http://127.0.0.1:5000/api/tareas', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ descripcion })
+      })
+      .then(res => res.json())
+      .then(nueva => {
+        mostrarTarea(nueva);
+        input.value = "";
+      });
+    });
+  </script>
+</body>
+</html>
